@@ -6,20 +6,23 @@ Mobile Networks for Classification, Detection and Segmentation" for more details
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from models.mobiconv import MobiConvBlock
 
 class Block(nn.Module):
     '''expand + depthwise + pointwise'''
-    def __init__(self, in_planes, out_planes, expansion, stride):
+    def __init__(self, in_planes, out_planes, expansion, stride, n_layers, n_pools):
         super(Block, self).__init__()
         self.stride = stride
 
         planes = expansion * in_planes
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, stride=1, padding=0, bias=False)
+        self.conv1 = MobiConvBlock(in_planes, planes, kernel_size=1, stride=1, padding=0, bias=False,
+                                   n_layers=n_layers, n_pools=n_pools)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, groups=planes, bias=False)
+        self.conv2 = MobiConvBlock(planes, planes, kernel_size=3, stride=stride, padding=1, groups=planes, bias=False,
+                                   n_layers=n_layers, n_pools=n_pools)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, out_planes, kernel_size=1, stride=1, padding=0, bias=False)
+        self.conv3 = MobiConvBlock(planes, out_planes, kernel_size=1, stride=1, padding=0, bias=False,
+                                   n_layers=n_layers, n_pools=n_pools)
         self.bn3 = nn.BatchNorm2d(out_planes)
 
         self.shortcut = nn.Sequential()
@@ -39,13 +42,13 @@ class Block(nn.Module):
 
 class MobileNetV2(nn.Module):
     # (expansion, out_planes, num_blocks, stride)
-    cfg = [(1,  16, 1, 1),
-           (6,  24, 2, 1),  # NOTE: change stride 2 -> 1 for CIFAR10
-           (6,  32, 3, 2),
-           (6,  64, 4, 2),
-           (6,  96, 3, 1),
-           (6, 160, 3, 2),
-           (6, 320, 1, 1)]
+    cfg = [(1,  16, 1, 1, 1, 2),
+           (6,  24, 2, 1, 1, 2),  # NOTE: change stride 2 -> 1 for CIFAR10
+           (6,  32, 3, 2, 2, 2),
+           (6,  64, 4, 2, 4, 2),
+           (6,  96, 3, 1, 4, 3),
+           (6, 160, 3, 2, 0, 0),
+           (6, 320, 1, 1, 0, 0)]
 
     def __init__(self, num_classes=10):
         super(MobileNetV2, self).__init__()
@@ -59,10 +62,10 @@ class MobileNetV2(nn.Module):
 
     def _make_layers(self, in_planes):
         layers = []
-        for expansion, out_planes, num_blocks, stride in self.cfg:
+        for expansion, out_planes, num_blocks, stride, num_layers, num_pools in self.cfg:
             strides = [stride] + [1]*(num_blocks-1)
             for stride in strides:
-                layers.append(Block(in_planes, out_planes, expansion, stride))
+                layers.append(Block(in_planes, out_planes, expansion, stride, num_layers, num_pools))
                 in_planes = out_planes
         return nn.Sequential(*layers)
 
