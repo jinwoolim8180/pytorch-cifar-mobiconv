@@ -13,6 +13,7 @@ import argparse
 
 from models import *
 from utils import progress_bar
+from tqdm import tqdm
 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
@@ -96,7 +97,7 @@ def train(epoch):
     train_loss = 0
     correct = 0
     total = 0
-    for batch_idx, (inputs, targets) in enumerate(trainloader):
+    for batch_idx, (inputs, targets) in tqdm(enumerate(trainloader)):
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
         outputs = net(inputs)
@@ -120,7 +121,7 @@ def test(epoch):
     correct = 0
     total = 0
     with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(testloader):
+        for batch_idx, (inputs, targets) in tqdm(enumerate(testloader)):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = net(inputs)
             loss = criterion(outputs, targets)
