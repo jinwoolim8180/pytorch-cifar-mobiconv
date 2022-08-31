@@ -18,8 +18,7 @@ class Block(nn.Module):
         self.conv1 = MobiConvBlock(in_planes, planes, kernel_size=1, stride=1, padding=0, bias=False,
                                    n_layers=n_layers, n_pools=n_pools)
         self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = MobiConvBlock(planes, planes, kernel_size=3, stride=stride, padding=1, groups=planes, bias=False,
-                                   n_layers=n_layers, n_pools=n_pools)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, groups=planes, bias=False)
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv3 = MobiConvBlock(planes, out_planes, kernel_size=1, stride=1, padding=0, bias=False,
                                    n_layers=n_layers, n_pools=n_pools)

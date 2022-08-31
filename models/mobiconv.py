@@ -18,15 +18,27 @@ class MobiConvBlock(nn.Module):
         assert out_channels >= n_pools * n_layers
 
         self.convs = nn.ModuleList()
-        for i in range(n_pools):
+        if groups != 1:
+            for i in range(n_pools):
+                self.convs.append(
+                    nn.Conv2d(in_channels, n_layers, kernel_size=kernel_size, groups=n_layers,
+                              padding=padding, stride=stride, bias=bias)
+                )
             self.convs.append(
-                nn.Conv2d(in_channels, n_layers, kernel_size=kernel_size, groups=groups,
+                nn.Conv2d(in_channels, out_channels - n_pools * n_layers, kernel_size=kernel_size,
+                          groups=out_channels - n_pools * n_layers,
                           padding=padding, stride=stride, bias=bias)
             )
-        self.convs.append(
-            nn.Conv2d(in_channels, out_channels - n_pools * n_layers, kernel_size=kernel_size, groups=groups,
-                      padding=padding, stride=stride, bias=bias)
-        )
+        else:
+            for i in range(n_pools):
+                self.convs.append(
+                    nn.Conv2d(in_channels, n_layers, kernel_size=kernel_size,
+                              padding=padding, stride=stride, bias=bias)
+                )
+            self.convs.append(
+                nn.Conv2d(in_channels, out_channels - n_pools * n_layers, kernel_size=kernel_size,
+                          padding=padding, stride=stride, bias=bias)
+            )
 
     def forward(self, x):
         N, C, H, W = x.shape
